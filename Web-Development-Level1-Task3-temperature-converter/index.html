@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interactive Temperature Converter web application for Celsius, Fahrenheit, and Kelvin with real-time conversion and absolute zero validation.">
+    <title>ThermoFlux | Modern Temperature Converter</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Ambient Background Glow -->
+    <div class="ambient-glow" id="ambientGlow"></div>
+    
+    <div class="app-wrapper">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <i class="fa-solid fa-temperature-half logo-icon"></i>
+                <h1 id="appTitle">Thermo<span>Flux</span></h1>
+            </div>
+            <p class="subtitle">Real-time precision temperature converter & thermal scale visualizer</p>
+        </header>
+
+        <main class="main-content">
+            <!-- Left Panel: Converter Controls -->
+            <section class="converter-card glass-panel" aria-labelledby="converterHeading">
+                <h2 id="converterHeading" class="sr-only">Temperature Input Form</h2>
+                
+                <form id="tempForm" onsubmit="return false;" novalidate>
+                    <!-- Input Value Field -->
+                    <div class="input-group">
+                        <label for="tempInput" class="input-label">
+                            <span>Temperature Value</span>
+                            <span class="tooltip-trigger" title="Enter any numeric value (decimals supported)">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-calculator input-icon"></i>
+                            <input 
+                                type="text" 
+                                id="tempInput" 
+                                name="tempInput"
+                                placeholder="e.g. 25 or -10.5" 
+                                autocomplete="off"
+                                aria-describedby="inputError"
+                                required
+                            >
+                            <button type="button" class="clear-btn" id="clearBtn" title="Clear input" aria-label="Clear input">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div class="error-message" id="inputError" role="alert" aria-live="polite"></div>
+                    </div>
+
+                    <!-- Input Unit Selector -->
+                    <div class="unit-selector-group">
+                        <label class="input-label">Select Input Unit</label>
+                        <div class="unit-options" role="radiogroup" aria-label="Input temperature unit">
+                            <label class="unit-radio">
+                                <input type="radio" name="inputUnit" value="C" checked>
+                                <span class="radio-card">
+                                    <span class="unit-symbol">°C</span>
+                                    <span class="unit-name">Celsius</span>
+                                </span>
+                            </label>
+
+                            <label class="unit-radio">
+                                <input type="radio" name="inputUnit" value="F">
+                                <span class="radio-card">
+                                    <span class="unit-symbol">°F</span>
+                                    <span class="unit-name">Fahrenheit</span>
+                                </span>
+                            </label>
+
+                            <label class="unit-radio">
+                                <input type="radio" name="inputUnit" value="K">
+                                <span class="radio-card">
+                                    <span class="unit-symbol">K</span>
+                                    <span class="unit-name">Kelvin</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="action-row">
+                        <button type="button" id="convertBtn" class="btn btn-primary">
+                            <i class="fa-solid fa-bolt"></i> Convert
+                        </button>
+                        
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="liveConvertToggle" checked>
+                            <span class="slider"></span>
+                            <span class="toggle-label">Real-time Conversion</span>
+                        </label>
+                    </div>
+                </form>
+
+                <!-- Quick Presets -->
+                <div class="presets-container">
+                    <span class="presets-title"><i class="fa-solid fa-fire-flame-curved"></i> Quick Presets:</span>
+                    <div class="preset-chips">
+                        <button class="chip" data-val="-273.15" data-unit="C" title="Absolute Zero (-273.15 °C)">
+                            <i class="fa-solid fa-snowflake"></i> Absolute Zero
+                        </button>
+                        <button class="chip" data-val="0" data-unit="C" title="Water Freezing (0 °C)">
+                            <i class="fa-solid fa-icicles"></i> Freezing Point
+                        </button>
+                        <button class="chip" data-val="21" data-unit="C" title="Room Temp (21 °C)">
+                            <i class="fa-solid fa-house"></i> Room Temp
+                        </button>
+                        <button class="chip" data-val="37" data-unit="C" title="Human Body (37 °C)">
+                            <i class="fa-solid fa-child"></i> Body Temp
+                        </button>
+                        <button class="chip" data-val="100" data-unit="C" title="Water Boiling (100 °C)">
+                            <i class="fa-solid fa-mug-hot"></i> Boiling Point
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Absolute Zero Warning Banner -->
+                <div class="alert-banner warning-banner" id="absoluteZeroAlert" role="alert" style="display: none;">
+                    <i class="fa-solid fa-triangle-exclamation alert-icon"></i>
+                    <div class="alert-text">
+                        <strong>Absolute Zero Violation!</strong>
+                        <p id="alertMessage">Temperature cannot drop below absolute zero (−273.15°C / −459.67°F / 0 K). Physics broken!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Results & Visualizer -->
+            <section class="results-card glass-panel">
+                <div class="results-header">
+                    <h2>Converted Output</h2>
+                    <span class="status-badge" id="thermalStateBadge">
+                        <i class="fa-solid fa-temperature-three-quarters"></i> Standard State
+                    </span>
+                </div>
+
+                <!-- Simultaneous Multi-Unit Display Grid -->
+                <div class="outputs-grid">
+                    <!-- Celsius Output Card -->
+                    <div class="output-card" id="cardCelsius">
+                        <div class="output-header">
+                            <span class="unit-tag">Celsius</span>
+                            <button class="copy-btn" data-copy="celsius" title="Copy value" aria-label="Copy Celsius Value">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="output-value-group">
+                            <span class="output-value" id="valCelsius">--</span>
+                            <span class="output-unit">°C</span>
+                        </div>
+                        <div class="output-desc">Base metric temperature scale</div>
+                    </div>
+
+                    <!-- Fahrenheit Output Card -->
+                    <div class="output-card" id="cardFahrenheit">
+                        <div class="output-header">
+                            <span class="unit-tag">Fahrenheit</span>
+                            <button class="copy-btn" data-copy="fahrenheit" title="Copy value" aria-label="Copy Fahrenheit Value">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="output-value-group">
+                            <span class="output-value" id="valFahrenheit">--</span>
+                            <span class="output-unit">°F</span>
+                        </div>
+                        <div class="output-desc">Imperial temperature scale</div>
+                    </div>
+
+                    <!-- Kelvin Output Card -->
+                    <div class="output-card" id="cardKelvin">
+                        <div class="output-header">
+                            <span class="unit-tag">Kelvin</span>
+                            <button class="copy-btn" data-copy="kelvin" title="Copy value" aria-label="Copy Kelvin Value">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="output-value-group">
+                            <span class="output-value" id="valKelvin">--</span>
+                            <span class="output-unit">K</span>
+                        </div>
+                        <div class="output-desc">SI thermodynamic scale</div>
+                    </div>
+                </div>
+
+                <!-- Visual Thermometer Gauge -->
+                <div class="thermometer-section">
+                    <div class="thermometer-header">
+                        <span>Thermal Level Meter</span>
+                        <span id="thermometerPercent">25% scale</span>
+                    </div>
+
+                    <div class="thermometer-container">
+                        <div class="thermometer-scale-marks">
+                            <span>100°C</span>
+                            <span>50°C</span>
+                            <span>0°C</span>
+                            <span>-50°C</span>
+                        </div>
+                        
+                        <div class="thermometer-track">
+                            <div class="thermometer-fill" id="thermoFill"></div>
+                        </div>
+
+                        <div class="thermometer-bulb" id="thermoBulb">
+                            <i class="fa-solid fa-temperature-arrow-up bulb-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formula Viewer Panel -->
+                <div class="formula-box">
+                    <div class="formula-title">
+                        <i class="fa-solid fa-square-root-variable"></i>
+                        <span>Conversion Breakdown</span>
+                    </div>
+                    <div class="formula-details" id="formulaText">
+                        Enter a temperature value to see formula equations.
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>ThermoFlux &copy; 2026 • Built with Vanilla HTML5, CSS3, and JavaScript</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="alert" aria-live="assertive">
+        <i class="fa-solid fa-circle-check toast-icon"></i>
+        <span id="toastMsg">Value copied to clipboard!</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
